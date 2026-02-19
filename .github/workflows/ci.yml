@@ -1,25 +1,55 @@
-name: Node CI
+name: Node CI/CD
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      # 1. Checkout repository
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Use Node.js
+      # 2. Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 18  # adjust as needed
 
+      # 3. Cache Node modules for faster builds
+      - name: Cache Node modules
+        uses: actions/cache@v3
+        with:
+          path: ./app/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('app/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # 4. Install dependencies
       - name: Install dependencies
         run: npm install
-        working-directory: app
+        working-directory: ./app
 
+      # 5. Run tests (placeholder)
       - name: Run tests
         run: npm test
-        working-directory: app
+        working-directory: ./app
+
+      # 6. Build project (placeholder)
+      - name: Build project
+        run: npm run build
+        working-directory: ./app
+
+      # 7. Optional: Linting
+      # Uncomment when you add ESLint or Prettier
+      # - name: Lint code
+      #   run: npm run lint
+      #   working-directory: ./app
+
+      # 8. Optional: Deploy
+      # Add your deployment steps here (Docker, AWS, Vercel, etc.)
