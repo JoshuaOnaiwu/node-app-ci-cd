@@ -17,6 +17,17 @@ spec:
       labels:
         app: node-app
     spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - node-app
+              topologyKey: "kubernetes.io/hostname"
+
       containers:
         - name: node-app
           image: 808850079759.dkr.ecr.us-east-1.amazonaws.com/node-app-ci-cd:v1.0.0
