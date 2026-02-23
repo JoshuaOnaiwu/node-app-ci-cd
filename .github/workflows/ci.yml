@@ -15,11 +15,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Setup Node.js
+      # 2. Setup Node.js (match Docker runtime version)
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18  # adjust as needed
+          node-version: 24
 
       # 3. Cache Node modules for faster builds
       - name: Cache Node modules
@@ -35,17 +35,11 @@ jobs:
         run: npm install
         working-directory: ./app
 
-      # 5. Run tests (placeholder)
+      # 5. Run tests
       - name: Run tests
         run: npm test
         working-directory: ./app
 
-
-      # 6. Optional: Linting
-      # Uncomment when you add ESLint or Prettier
-      # - name: Lint code
-      #   run: npm run lint
-      #   working-directory: ./app
-
-      # 7. Optional: Deploy
-      # Add your deployment steps here (Docker, AWS, Vercel, etc.)
+      # 6. Build Docker image (tagged with commit SHA)
+      - name: Build Docker image
+        run: docker build -t node-app-ci-cd:${{ github.sha }} .
