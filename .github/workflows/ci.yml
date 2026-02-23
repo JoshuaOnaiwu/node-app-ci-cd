@@ -15,31 +15,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Setup Node.js (match Docker runtime version)
+      # 2. Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 24
 
-      # 3. Cache Node modules for faster builds
-      - name: Cache Node modules
-        uses: actions/cache@v3
-        with:
-          path: ./app/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('app/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      # 4. Install dependencies
+      # 3. Install dependencies
       - name: Install dependencies
         run: npm install
         working-directory: ./app
 
-      # 5. Run tests
+      # 4. Run tests
       - name: Run tests
         run: npm test
         working-directory: ./app
 
-      # 6. Build Docker image (tagged with commit SHA)
+      # 5. Build Docker image
       - name: Build Docker image
         run: docker build -t node-app-ci-cd:${{ github.sha }} .
+
+      # 6. Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # 7. Login to Amazon ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 8. Tag and push Docker image
+      - name: Tag and push Docker image
+        run: |
+          docker tag node-app-ci-cd:${{ github.sha }} 808850079759.dkr.ecr.us-east-1.amazonaws.com/node-app-ci-cd:${{ github.sha }}
+          docker push 808850079759.dkr.ecr.us-east-1.amazonaws.com/node-app-ci-cd:${{ github.sha }}
