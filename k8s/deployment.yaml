@@ -32,7 +32,7 @@ spec:
 
       containers:
         - name: node-app
-          image: 808850079759.dkr.ecr.us-east-1.amazonaws.com/node-app-ci-cd:v1.0.0
+          image: 808850079759.dkr.ecr.us-east-1.amazonaws.com/node-app-ci-cd:96e0a7e39c7e34125f8c5ed034d51248e189e4d8
           ports:
             - containerPort: 3000
 

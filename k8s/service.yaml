@@ -1,11 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: node-app-service
+  name: node-app 
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: node-app
   ports:
-    - port: 80
+    - port: 3000
       targetPort: 3000
+      nodePort: 30007
