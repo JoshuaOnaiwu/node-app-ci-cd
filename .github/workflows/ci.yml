@@ -15,27 +15,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repo
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Setup Node
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 24
 
-      # Install dependencies
       - name: Install dependencies
         run: npm install
         working-directory: ./app
 
-      # Run tests
       - name: Run tests
         run: npm test
         working-directory: ./app
 
-      # Configure AWS credentials
+      #################################
+      # SNYK DEPENDENCY SCAN
+      #################################
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        with:
+          command: test
+          args: --severity-threshold=high
+          working-directory: ./app
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      #################################
+      # AWS AUTH
+      #################################
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -43,31 +55,37 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Login to ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Set image URI
       - name: Set Image URI
         run: |
           echo "IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}" >> $GITHUB_ENV
 
-      # Build Docker image
       - name: Build Docker image
         run: docker build -t $IMAGE_URI .
 
-      # Push image to ECR
+      #################################
+      # SNYK CONTAINER SCAN
+      #################################
+
+      - name: Run Snyk Container Scan
+        uses: snyk/actions/docker@master
+        with:
+          image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+          args: --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
       - name: Push image
         run: docker push $IMAGE_URI
 
-      # Update kubeconfig for EKS
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig \
             --region $AWS_REGION \
             --name $EKS_CLUSTER_NAME
 
-      # Deploy to Kubernetes (Rolling Update)
       - name: Deploy to EKS
         run: |
           kubectl set image deployment/node-app node-app=$IMAGE_URI --record
