@@ -2,63 +2,73 @@ name: Node CI/CD
 
 on:
   push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    branches: [ main ]
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: node-app-ci-cd
+  EKS_CLUSTER_NAME: devops-eks
+  AWS_ACCOUNT_ID: 808850079759
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
+      # Checkout repo
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Setup Node.js
+      # Setup Node
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 24
 
-      # 3. Install dependencies
+      # Install dependencies
       - name: Install dependencies
         run: npm install
         working-directory: ./app
 
-      # 4. Run tests
+      # Run tests
       - name: Run tests
         run: npm test
         working-directory: ./app
 
-      # 5. Build Docker image
-      - name: Build Docker image
-        run: docker build -t node-app-ci-cd:${{ github.sha }} .
-
-      # 6. Configure AWS credentials
+      # Configure AWS credentials
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      # 7. Login to Amazon ECR
+      # Login to ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      # 8. Tag and push Docker image
-      - name: Tag and push Docker image
+      # Set image URI
+      - name: Set Image URI
         run: |
-          docker tag node-app-ci-cd:${{ github.sha }} 808850079759.dkr.ecr.us-east-1.amazonaws.com/node-app-ci-cd:${{ github.sha }}
-          docker push 808850079759.dkr.ecr.us-east-1.amazonaws.com/node-app-ci-cd:${{ github.sha }}
+          echo "IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ github.sha }}" >> $GITHUB_ENV
 
-      # 9. Update kubeconfig
+      # Build Docker image
+      - name: Build Docker image
+        run: docker build -t $IMAGE_URI .
+
+      # Push image to ECR
+      - name: Push image
+        run: docker push $IMAGE_URI
+
+      # Update kubeconfig for EKS
       - name: Update kubeconfig
-        run: aws eks update-kubeconfig --region us-east-1 --name devops-eks
+        run: |
+          aws eks update-kubeconfig \
+            --region $AWS_REGION \
+            --name $EKS_CLUSTER_NAME
 
-      # 10. Deploy to EKS (update image)
+      # Deploy to Kubernetes (Rolling Update)
       - name: Deploy to EKS
         run: |
-          kubectl set image deployment/node-app node-app=808850079759.dkr.ecr.us-east-1.amazonaws.com/node-app-ci-cd:${{ github.sha }}
+          kubectl set image deployment/node-app node-app=$IMAGE_URI --record
           kubectl rollout status deployment/node-app
