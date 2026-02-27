@@ -16,11 +16,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      #################################
+      # CHECKOUT
+      #################################
+
       - name: Checkout code
         uses: actions/checkout@v4
 
       #################################
-      # INSTALL NODE + DEPENDENCIES
+      # SETUP NODE
       #################################
 
       - name: Setup Node.js
@@ -29,24 +33,31 @@ jobs:
           node-version: 24
 
       - name: Install dependencies
-        run: npm install
-        working-directory: ./app
+        run: |
+          cd app
+          npm install
+
+      #################################
+      # INSTALL & AUTHENTICATE SNYK
+      #################################
+
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
       #################################
       # SNYK DEPENDENCY SCAN
       #################################
 
       - name: Run Snyk Dependency Scan
-        uses: snyk/actions/node@master
-        with:
-          command: test
-          args: --severity-threshold=high
-          working-directory: ./app
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          cd app
+          snyk test --severity-threshold=high
 
       #################################
-      # AWS AUTH
+      # CONFIGURE AWS
       #################################
 
       - name: Configure AWS credentials
@@ -77,12 +88,10 @@ jobs:
       #################################
 
       - name: Run Snyk Container Scan
-        uses: snyk/actions/docker@master
-        with:
-          image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
-          args: --severity-threshold=high
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk container test \
+          $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }} \
+          --severity-threshold=high
 
       #################################
       # PUSH IMAGE
