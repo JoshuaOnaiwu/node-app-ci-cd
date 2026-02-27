@@ -19,6 +19,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      #################################
+      # INSTALL NODE + DEPENDENCIES
+      #################################
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: ./app
+
+      #################################
+      # SNYK DEPENDENCY SCAN
+      #################################
+
+      - name: Run Snyk Dependency Scan
+        uses: snyk/actions/node@master
+        with:
+          command: test
+          args: --severity-threshold=high
+          working-directory: ./app
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      #################################
+      # AWS AUTH
+      #################################
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -32,16 +62,40 @@ jobs:
           docker login --username AWS --password-stdin \
           $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
+      #################################
+      # BUILD IMAGE
+      #################################
+
       - name: Build Docker image
         run: |
           docker build -t $ECR_REPOSITORY:${{ github.sha }} .
           docker tag $ECR_REPOSITORY:${{ github.sha }} \
           $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
 
+      #################################
+      # SNYK CONTAINER SCAN
+      #################################
+
+      - name: Run Snyk Container Scan
+        uses: snyk/actions/docker@master
+        with:
+          image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
+          args: --severity-threshold=high
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      #################################
+      # PUSH IMAGE
+      #################################
+
       - name: Push Docker image
         run: |
           docker push \
           $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
+
+      #################################
+      # DEPLOY TO EKS
+      #################################
 
       - name: Update kubeconfig
         run: |
