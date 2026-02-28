@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
       #################################
       # CHECKOUT
       #################################
@@ -38,7 +39,7 @@ jobs:
           npm install
 
       #################################
-      # INSTALL & AUTHENTICATE SNYK
+      # SNYK SCAN
       #################################
 
       - name: Install Snyk CLI
@@ -47,17 +48,13 @@ jobs:
       - name: Authenticate Snyk
         run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
-      #################################
-      # SNYK DEPENDENCY SCAN
-      #################################
-
       - name: Run Snyk Dependency Scan
         run: |
           cd app
           snyk test --severity-threshold=high
 
       #################################
-      # CONFIGURE AWS
+      # AWS AUTH
       #################################
 
       - name: Configure AWS credentials
@@ -84,13 +81,6 @@ jobs:
           $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
 
       #################################
-      # CONTAINER SCAN (SKIPPED)
-      #################################
-
-      - name: Skip container scan (plan limitation)
-        run: echo "Container scan skipped - requires Snyk container entitlement"
-
-      #################################
       # PUSH IMAGE
       #################################
 
@@ -100,7 +90,7 @@ jobs:
           $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}
 
       #################################
-      # DEPLOY TO EKS
+      # DEPLOY TO EKS (FIXED)
       #################################
 
       - name: Update kubeconfig
@@ -111,7 +101,12 @@ jobs:
         run: |
           sed -i "s|image: .*|image: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:${{ github.sha }}|" k8s/deployment.yaml
 
-      - name: Deploy to EKS
+      - name: Apply Kubernetes manifests
         run: |
-          kubectl apply -f k8s/
-          kubectl rollout status deployment/node-app --timeout=180s || true
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/hpa.yaml
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/node-app --timeout=300s
