@@ -1,155 +1,79 @@
-node-app-ci-cd
+𝗻𝗼𝗱𝗲-𝗮𝗽𝗽-𝗰𝗶-𝗰𝗱
+═══════════════════
 
-End-to-End DevSecOps CI/CD Pipeline using GitHub Actions, Docker, AWS EKS, Kubernetes, Snyk, Prometheus, and Grafana.
+𝗘𝗻𝗱-𝘁𝗼-𝗘𝗻𝗱 𝗗𝗲𝘃𝗦𝗲𝗰𝗢𝗽𝘀 𝗖𝗜/𝗖𝗗 𝗣𝗶𝗽𝗲𝗹𝗶𝗻𝗲 𝘂𝘀𝗶𝗻𝗴 𝗚𝗶𝘁𝗛𝘂𝗯 𝗔𝗰𝘁𝗶𝗼𝗻𝘀, 𝗗𝗼𝗰𝗸𝗲𝗿, 𝗔𝗪𝗦 𝗘𝗞𝗦, 𝗧𝗲𝗿𝗿𝗮𝗳𝗼𝗿𝗺, 𝗦𝗼𝗻𝗮𝗿𝗤𝘂𝗯𝗲, 𝗦𝗻𝘆𝗸, 𝗣𝗿𝗼𝗺𝗲𝘁𝗵𝗲𝘂𝘀, 𝗮𝗻𝗱 𝗚𝗿𝗮𝗳𝗮𝗻𝗮.
 
-📌 Project Overview
+━━━━━━━━━━━━━━━━━━━━
 
-This project implements a full DevSecOps CI/CD pipeline for a Node.js application deployed to AWS EKS.
+📌 𝗣𝗿𝗼𝗷𝗲𝗰𝘁 𝗢𝘃𝗲𝗿𝘃𝗶𝗲𝘄
 
-The GitHub Actions pipeline automates the build, security validation, containerization, and deployment workflow.
+This GitHub Actions workflow automates the build, security scanning, containerization, and deployment of a Node.js application.
 
 The application is packaged as a Docker image, securely pushed to Amazon ECR, and deployed to a Kubernetes (EKS) cluster using predefined manifests.
 
-Before deployment, the pipeline incorporates Snyk dependency scanning to identify vulnerabilities in the application dependencies, ensuring that only secure artifacts are released.
+Before deployment, the pipeline integrates Snyk security scanning to detect vulnerabilities in both application dependencies and the container image, ensuring that only secure artifacts are released.
 
-The deployment process includes automated rollout validation and horizontal pod autoscaling. Monitoring is enabled through Prometheus and Grafana installed via Helm to provide observability into cluster health and application performance.
+The deployment phase also includes installation of Prometheus and Grafana monitoring using Helm to provide observability and operational visibility into the Kubernetes cluster.
 
-📍 Project Status
+━━━━━━━━━━━━━━━━━━━━
 
-This project is complete.
+📍 𝗣𝗿𝗼𝗷𝗲𝗰𝘁 𝗦𝘁𝗮𝘁𝘂𝘀
 
-All components were successfully:
+This project is complete and archived.
+All cloud resources were destroyed after validation to prevent ongoing costs.
 
-• Built
-• Secured
-• Deployed
-• Scaled
-• Monitored
-• Debugged (including CrashLoopBackOff and rollout timeout scenarios)
+━━━━━━━━━━━━━━━━━━━━
 
-The infrastructure remains active for demonstration purposes.
-In a production environment, infrastructure teardown would be handled via Infrastructure-as-Code to prevent ongoing costs.
+🧱 𝗔𝗿𝗰𝗵𝗶𝘁𝗲𝗰𝘁𝘂𝗿𝗲
 
-🧱 Architecture
+GitHub → GitHub Actions → SonarQube → Docker → Snyk → AWS ECR → Kubernetes (EKS) → Monitoring
 
-GitHub → GitHub Actions → Snyk → Docker → AWS ECR → Kubernetes (EKS) → HPA → Prometheus → Grafana
+━━━━━━━━━━━━━━━━━━━━
 
-This reflects a production-style delivery chain:
+🔐 𝗦𝗲𝗰𝘂𝗿𝗶𝘁𝘆 & 𝗤𝘂𝗮𝗹𝗶𝘁𝘆 𝗚𝗮𝘁𝗲𝘀
 
-Application → Container → Registry → Cluster → Autoscaling → Observability → Security
+• SonarQube Quality Gate enforcement within GitHub Actions
+• Snyk container vulnerability blocking (HIGH and CRITICAL)
+• Continuous container vulnerability monitoring with Snyk
 
-🔐 Security & Quality Controls
+Note: SonarQube Quality Gates are enforced in the GitHub Actions workflow. A screenshot was not captured during the final successful run, but the Quality Gate stage is implemented and blocks the workflow on failure.
 
-Snyk dependency scanning is integrated directly into the CI pipeline.
+━━━━━━━━━━━━━━━━━━━━
 
-Security enforcement includes:
-
-• Blocking HIGH severity vulnerabilities
-• Preventing insecure builds from reaching ECR
-• Automated validation before deployment
-
-Container-level scanning was evaluated during implementation, with plan limitations documented.
-
-Health probes and rollout validation ensure only stable workloads are promoted.
-
-📊 Kubernetes Cluster Monitoring (Grafana)
+📊 𝗞𝘂𝗯𝗲𝗿𝗻𝗲𝘁𝗲𝘀 𝗖𝗹𝘂𝗦𝘁𝗲𝗿 𝗠𝗼𝗻𝗶𝘁𝗼𝗿𝗶𝗻𝗴 (𝗚𝗿𝗮𝗳𝗮𝗻𝗮)
 
 Grafana dashboards were successfully deployed using the kube-prometheus-stack Helm chart.
 
-Monitoring components include:
+On the AWS Free Tier single-node EKS cluster, Prometheus could not be scheduled due to VPC CNI pod density limits, resulting in dashboards displaying “No data”.
 
-• Prometheus
-• Grafana
-• kube-state-metrics
-• node-exporter
+This behavior is expected on resource-constrained clusters. In a production-grade setup, this would be resolved by scaling node capacity or optimizing monitoring component resource requests.
 
-Dashboards provide visibility into:
+━━━━━━━━━━━━━━━━━━━━
 
-• Pod CPU usage
-• Memory utilization
-• Node health
-• Horizontal Pod Autoscaler behavior
+⚙️ 𝗧𝗲𝗰𝗵 𝗦𝘁𝗮𝗰𝗸
 
-Monitoring was validated against live cluster metrics.
+• GitHub Actions
+• Docker
+• Terraform
+• AWS (EKS, ECR, VPC)
+• Kubernetes
+• SonarQube
+• Snyk
+• Prometheus & Grafana
 
-⚙️ CI/CD Pipeline Flow
+━━━━━━━━━━━━━━━━━━━━
 
-Continuous Integration:
+🧹 𝗖𝗼𝘀𝘁 𝗠𝗮𝗻𝗮𝗴𝗲𝗺𝗲𝗻𝘁
 
-Checkout repository
+All infrastructure was destroyed after testing using:
 
-Install dependencies
+terraform destroy
+Helm cleanup for monitoring components
 
-Run tests
+This ensures AWS Free Tier cost safety.
 
-Execute Snyk dependency scan
+━━━━━━━━━━━━━━━━━━━━
 
-Build Docker image
+🏷️ 𝗥𝗲𝗹𝗲𝗮𝘀𝗲
 
-Tag image using commit SHA
-
-Continuous Delivery:
-
-Authenticate to AWS
-
-Push image to Amazon ECR
-
-Update Kubernetes deployment image
-
-Apply manifests
-
-Wait for rollout completion
-
-Rollout status is programmatically verified to prevent incomplete deployments.
-
-🐳 Docker Strategy
-
-• Lightweight node:24-alpine base image
-• Production-only dependencies (npm install --omit=dev)
-• Optimized build layering for cache efficiency
-• Image versioned using Git commit SHA
-• Immutable container deployment
-
-CrashLoopBackOff debugging revealed entrypoint path misalignment, which was resolved by aligning Docker CMD with the application start script.
-
-📂 Repository Structure
-.
-├── app/                    # Node.js application
-├── infra/                  # Infrastructure-related configs (IAM, cluster files)
-├── k8s/                    # Kubernetes manifests
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   └── hpa.yaml
-├── .github/workflows/      # GitHub Actions CI/CD pipeline
-├── Dockerfile              # Production container definition
-└── README.md
-🧪 Deployment Validation
-
-During implementation, the following real-world issues were encountered and resolved:
-
-• Docker build context misalignment
-• Incorrect container entrypoint (MODULE_NOT_FOUND)
-• CrashLoopBackOff debugging
-• Kubernetes rollout timeout
-• Invalid manifest validation errors
-• IAM JSON mistakenly applied as Kubernetes resources
-
-These were resolved through structured debugging using:
-
-kubectl describe pod
-kubectl logs
-kubectl get events
-kubectl rollout status
-🧹 Cost Management
-
-In a production or cost-sensitive environment:
-
-• EKS clusters would be destroyed using Infrastructure-as-Code
-• Helm monitoring components would be removed
-• ECR lifecycle policies would manage image retention
-
-This ensures cloud cost control and operational hygiene.
-
-🏷️ Release
-
-v1.0.0 – Production-Style DevSecOps Pipeline
+v1.0-capstone
