@@ -1,26 +1,51 @@
 #################################
-# Node.js
+# ==============================
+# Node.js Application (app/)
+# ==============================
+#################################
+
+app/node_modules/
+app/npm-debug.log*
+app/yarn-debug.log*
+app/yarn-error.log*
+app/.env
+app/.env.*
+app/dist/
+app/build/
+app/logs/
+app/coverage/
+
+#################################
+# ==============================
+# Root-Level Node Artifacts (Prevent Drift)
+# ==============================
 #################################
 
 node_modules/
-dist/
-build/
-coverage/
-*.log
+package.json
+package-lock.json
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 #################################
-# Environment Files
+# ==============================
+# Terraform (infra/)
+# ==============================
 #################################
 
-.env
-.env.*
-!.env.example
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/crash.log
+infra/override.tf
+infra/*_override.tf
+infra/*.tfvars
+infra/*.tfvars.json
+infra/*.tfplan
 
 #################################
-# OS / Editor Files
+# ==============================
+# OS / IDE
+# ==============================
 #################################
 
 .DS_Store
@@ -28,47 +53,20 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
-*.swo
 
 #################################
-# Docker
-#################################
-
-docker-compose.override.yml
-*.tar
-
-#################################
-# Terraform
-#################################
-
-# Terraform local working directory
-**/.terraform/*
-
-# Terraform state files
-*.tfstate
-*.tfstate.*
-crash.log
-
-# Terraform variable files (often contain secrets)
-*.tfvars
-*.tfvars.json
-
-# Terraform plan files
-*.tfplan
-
-# Override files (rare but safe to ignore)
-*_override.tf
-override.tf
-
-#################################
-# Kubernetes
+# ==============================
+# Kubernetes / Cluster
+# ==============================
 #################################
 
 kubeconfig
 *.kubeconfig
 
 #################################
-# AWS Credentials
+# ==============================
+# AWS Local Config
+# ==============================
 #################################
 
 .aws/
@@ -76,15 +74,14 @@ credentials
 config
 
 #################################
-# Helm
+# ==============================
+# Archives / Temporary Files
+# ==============================
 #################################
 
-*.tgz
-
-#################################
-# Misc
-#################################
-
+*.zip
+*.tar
+*.gz
 *.bak
 *.tmp
 *.temp
